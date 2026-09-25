@@ -33,18 +33,23 @@ jobs:
 
       # 直接链接 bionic（Termux 原生 libc），运行时 DNS 走 Android netd；
       # glibc/musl 静态方案在 Termux 下 DNS 解析不可用，故必须走 NDK。
+      # runner 镜像自带 Android SDK + sdkmanager，无需 setup-android action
+      # （其默认 packages 含已废弃的 tools 包会失败）。
       - name: Install Android NDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install NDK (sdkmanager)
-        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
+        run: |
+          SDKMANAGER=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          NDK_DIR=/usr/local/lib/android/sdk/ndk
+          if [ ! -d "$NDK_DIR/$NDK_VERSION" ]; then
+            yes | "$SDKMANAGER" --install "ndk;${NDK_VERSION}" > /dev/null 2>&1
+          fi
+          ls "$NDK_DIR"
 
       - name: Install cargo-ndk
         run: cargo install --locked cargo-ndk
 
       - name: Build web server
         env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/${{ env.NDK_VERSION }}
         working-directory: web
         run: |
           cargo ndk -t arm64-v8a -p ${{ env.API }} build --release
