@@ -47,16 +47,9 @@ pub fn resolve(explicit: Option<&str>) -> Lang {
     if let Some(l) = explicit.and_then(Lang::parse) {
         return l;
     }
-    // Android(Termux) 下 sys-locale 走 JNI，纯 Rust 进程无 JVM 不可用，
-    // 改用 LANG 环境变量推断（Termux 常见 zh_CN.UTF-8）；其余平台行为不变。
-    #[cfg(target_os = "android")]
-    {
-        if let Ok(l) = std::env::var("LANG") {
-            if !l.to_ascii_lowercase().starts_with("zh") {
-                return Lang::En;
-            }
-        }
-    }
+    // Android(Termux)：sys-locale 走 JNI，纯 Rust 进程无 JVM 不可用；
+    // 且 LANG 环境（Termux 默认多为 en_US.UTF-8）不能反映用户真实偏好。
+    // Web 版无显式设置时默认中文；需要英文可在设置页切换（持久化）。
     #[cfg(not(target_os = "android"))]
     if let Some(os) = sys_locale::get_locale() {
         if !os.to_ascii_lowercase().starts_with("zh") {
