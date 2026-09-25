@@ -388,7 +388,8 @@ pub fn dispatch(cmd: &str, b: &Value, hub: &Arc<Hub>) -> Result<Value, String> {
         "open_settings" => Ok(Value::Null), // Web 版由前端直接打开 /settings.html
         "open_external" => {
             let url = get_str(b, "url")?;
-            store::open_url(&url)
+            store::open_url(&url)?;
+            Ok(Value::Null)
         }
 
         // ===== 导出 / 导入（Web 等价物）=====
@@ -417,8 +418,8 @@ pub fn dispatch(cmd: &str, b: &Value, hub: &Arc<Hub>) -> Result<Value, String> {
             let password = get_str(b, "password")?;
             export_write(&path, &[], &password, true)
         }
-        /// Web 版：前端用 <input type=file> 读取 .zsb 内容后上传，服务端做桌面版
-        /// import_pick_files 相同的 sealed 校验，返回相同形状，后续流程不变。
+        // Web 版：前端用 <input type=file> 读取 .zsb 内容后上传，服务端做桌面版
+        // import_pick_files 相同的 sealed 校验，返回相同形状，后续流程不变。
         "import_pick_files" => {
             let files = b
                 .get("files")
@@ -512,7 +513,8 @@ pub fn dispatch(cmd: &str, b: &Value, hub: &Arc<Hub>) -> Result<Value, String> {
             if !ok {
                 return Err(i18n::trf("err.zcode.path_invalid_hint", &[("p", &p)]));
             }
-            store::launch_zcode(&p)
+            store::launch_zcode(&p)?;
+            Ok(Value::Null)
         }
 
         other => Err(format!("unknown command: {other}")),
