@@ -1,5 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { invoke, listen, IS_WEB, openCaptchaOverlay, closeCaptchaOverlay, pickLocalFiles } from "./bridge.js";
 import { esc, toast as showToast, openPwModal, openConfirmModal, openProviderModal, installDelegation, dismissSplash } from "./ui.js";
 import { ic } from "./icons.js";
 import { init, t, has, lang, localeTag, stripErr } from "./i18n.js";
@@ -163,7 +162,8 @@ let claimWaiter = null;
 function waitForClaimResult(accountId, timeoutMs = 90000) {
   return new Promise((resolve) => {
     let done = false;
-    const finish = (v) => { if (!done) { done = true; claimWaiter = null; clearTimeout(t); resolve(v); } };
+    // Web 模式：结果送达时同步关闭 captcha 浮层（桌面模式为空操作）
+    const finish = (v) => { if (!done) { done = true; claimWaiter = null; clearTimeout(t); closeCaptchaOverlay(); resolve(v); } };
     const t = setTimeout(() => finish(null), timeoutMs);
     claimWaiter = { accountId, finish };
   });
@@ -257,7 +257,14 @@ const actions = {
 
   async importFiles() {
     await guard(async () => {
-      const p = await invoke("import_pick_files");
+      let p;
+      if (IS_WEB) {
+        const local = await pickLocalFiles();
+        if (!local.length) return;
+        p = await invoke("import_pick_files", { files: local });
+      } else {
+        p = await invoke("import_pick_files");
+      }
       if (!p.picked) return;
       const sealed = p.sealed || [];
       const preErrors = p.errors || [];
@@ -427,6 +434,7 @@ const actions = {
   },
 
   async openSettings() {
+    if (IS_WEB) { window.open("/settings.html", "_blank"); return; }
     try { await invoke("open_settings"); }
     catch (e) { toast(stripErr(e), "err"); }
   },
@@ -445,7 +453,12 @@ const actions = {
       providers,
       onPick: async (id) => {
         try {
-          await invoke("oauth_begin", { provider: id });
+          const r = await invoke("oauth_begin", { provider: id });
+          if (IS_WEB && r && r.authorizeUrl) {
+            window.open(r.authorizeUrl, "_blank");
+            toast(t("m.loginWindowOpened"), "ok", t("m.loginWindowDetail"));
+            return;
+          }
           toast(t("m.loginWindowOpened"), "ok", t("m.loginWindowDetail"));
         } catch (e) {
           actions.showManualAdd(stripErr(e));
@@ -476,6 +489,7 @@ const actions = {
     claimActive = true;
     try {
       await invoke("claim_start", { id, planId: plan.plan_id });
+      if (IS_WEB) openCaptchaOverlay(false);
       toast(t("m.claimVerify", { name: plan.name || plan.plan_id }), "ok", t("m.claimVerifyDetail"));
       const r = await waitForClaimResult(id);
       if (!r) toast(t("m.claimTimeout"), "warn");
@@ -501,6 +515,7 @@ const actions = {
         const name = state.accounts.find((a) => a.id === id)?.name || id;
         try {
           await invoke("claim_start", { id, planId: plan.plan_id });
+          if (IS_WEB) openCaptchaOverlay(true);
         } catch (e) {
           toast(t("m.claimAccountErr", { name, err: stripErr(e) }), "err");
           continue;
@@ -672,6 +687,7 @@ async function autoClaimTick() {
         if (!plan) break;
         try {
           await invoke("claim_start", { id, planId: plan.plan_id, auto: true });
+          if (IS_WEB) openCaptchaOverlay(true);
         } catch (e) {
           await invoke("claim_cancel").catch(() => {});
           autoClaimCooldown[id] = Date.now() + AUTO_CLAIM_INTERVAL_MS;

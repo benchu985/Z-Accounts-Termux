@@ -1036,3 +1036,30 @@ input:focus-visible,
 .pv-item:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 .pv-item .pv-arrow { color: var(--ink-mute); font-family: var(--mono); }
 .pv-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+/* ===== Web 模式 captcha 浮层（src/bridge.js 注入；桌面版不渲染） ===== */
+.cap-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(8, 8, 10, .62);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(2px);
+}
+.cap-overlay.auto {
+  /* 自动领取时的离屏无感通道：保持"可见"以运行无感验证，但不打扰 */
+  pointer-events: none; opacity: 0;
+  position: fixed; right: 0; bottom: 0; width: 1px; height: 1px; inset: auto;
+}
+.cap-overlay-panel {
+  width: min(380px, 94vw);
+  border: 1px solid var(--hairline, #2a2b30);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0a0a0c;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .5);
+}
+.cap-overlay-panel iframe {
+  display: block; width: 100%;
+  height: min(400px, 72vh);
+  border: 0;
+  background: #0a0a0c;
+}

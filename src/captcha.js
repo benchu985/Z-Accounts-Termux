@@ -1,6 +1,5 @@
 
-import { invoke } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
+import { invoke, emit } from "./bridge.js";
 import { init, t, lang, stripErr } from "./i18n.js";
 
 const SDK_URL = "https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js";

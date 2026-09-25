@@ -1,14 +1,17 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, IS_WEB } from "./bridge.js";
 import { ic } from "./icons.js";
 import { t, has, errCode, stripErr } from "./i18n.js";
 
-document.addEventListener("contextmenu", (e) => e.preventDefault());
+// 开发者工具屏蔽仅是桌面沙盒行为，Web 模式保留浏览器原生能力
+if (!IS_WEB) {
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "F12") e.preventDefault();
-  if (e.ctrlKey && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key)) e.preventDefault();
-  if (e.ctrlKey && ["u", "s"].includes(e.key.toLowerCase())) e.preventDefault();
-});
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "F12") e.preventDefault();
+    if (e.ctrlKey && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key)) e.preventDefault();
+    if (e.ctrlKey && ["u", "s"].includes(e.key.toLowerCase())) e.preventDefault();
+  });
+}
 
 export function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

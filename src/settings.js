@@ -1,5 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { invoke, listen, IS_WEB, pickLocalFiles } from "./bridge.js";
 import { esc, toast, openPwModal, installDelegation, dismissSplash } from "./ui.js";
 import { ic } from "./icons.js";
 import { init, t, lang, stripErr } from "./i18n.js";
@@ -34,6 +33,7 @@ const actions = {
   async refresh() { await refresh(); render(); },
 
   async openGitHub() {
+    if (IS_WEB) { window.open("https://github.com/Kang-code-sudo/Z-Accounts", "_blank"); return; }
     await invoke("open_external", { url: "https://github.com/Kang-code-sudo/Z-Accounts" });
   },
 
@@ -84,7 +84,14 @@ const actions = {
 
   async importFiles() {
     await guard(async () => {
-      const p = await invoke("import_pick_files");
+      let p;
+      if (IS_WEB) {
+        const local = await pickLocalFiles();
+        if (!local.length) return;
+        p = await invoke("import_pick_files", { files: local });
+      } else {
+        p = await invoke("import_pick_files");
+      }
       if (!p.picked) return;
       const sealed = p.sealed || [];
       const preErrors = p.errors || [];
@@ -190,10 +197,10 @@ function render() {
         </div>
       </div>
       <label>BEHAVIOR · ${t("s.behaviorLabel")}</label>
-      ${toggle(autostart, "actions.toggleAutostart()", t("s.autostart"), t("s.autostartDesc"))}
+      ${IS_WEB ? "" : toggle(autostart, "actions.toggleAutostart()", t("s.autostart"), t("s.autostartDesc"))}
       ${toggle(s.launch_after_switch, "actions.toggleBehavior('launch')", t("s.launchAfter"), t("s.launchAfterDesc"))}
-      ${toggle(s.close_to_tray, "actions.toggleBehavior('tray')", t("s.closeTray"), t("s.closeTrayDesc"))}
-      ${toggle(s.hot_switch, "actions.toggleBehavior('hot')", t("s.hotSwitch"), t("s.hotSwitchDesc"))}
+      ${IS_WEB ? "" : toggle(s.close_to_tray, "actions.toggleBehavior('tray')", t("s.closeTray"), t("s.closeTrayDesc"))}
+      ${IS_WEB ? "" : toggle(s.hot_switch, "actions.toggleBehavior('hot')", t("s.hotSwitch"), t("s.hotSwitchDesc"))}
       <label style="margin-top:14px">${t("s.authLabel")}</label>
       ${toggle(s.auth_proxy_on, "actions.toggleAuthProxy()", t("s.proxyToggle"), t("s.proxyToggleDesc"))}
       <div class="path-line" style="margin-top:6px">
@@ -209,7 +216,7 @@ function render() {
       <label style="margin-top:14px">${t("s.pathLabel")}</label>
       <div class="path-line">
         <input class="zcode-path" type="text" value="${esc(s.zcode_path)}" placeholder="C:\\Program Files\\ZCode\\ZCode.exe" keydown="onPathKey(event)">
-        <button class="btn-ghost" click="actions.browsePath()">${t("s.browse")}</button>
+        ${IS_WEB ? "" : `<button class="btn-ghost" click="actions.browsePath()">${t("s.browse")}</button>`}
         <button class="btn-ghost" click="actions.savePath()">${t("common.save")}</button>
       </div>
       <div class="hint">${t("s.hint")}</div>
