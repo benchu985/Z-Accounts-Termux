@@ -49,7 +49,8 @@ jobs:
           echo "NDK_PATH=$NDK_PATH" >> "$GITHUB_ENV"
 
       - name: Install cargo-ndk
-        run: cargo install --locked cargo-ndk
+        # 固定 3.x：4.x 的 -p 参数改指 cargo package，不再是平台 API 级别
+        run: cargo install cargo-ndk --locked --version ^3
 
       - name: Build web server
         env:
