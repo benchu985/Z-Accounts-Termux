@@ -10,7 +10,7 @@
 |---|---|---|
 | `src-tauri/src/oauth.rs` | `tauri::Url` → `url::Url`（2 处） | 脱离 tauri 框架也能编译；tauri::Url 本就是 url crate 的 re-export，桌面构建行为不变 |
 | `src-tauri/src/store.rs` | `open_url()` 增加 `target_os = "android"` 分支调 `termux-open-url` | Android 无 xdg-open |
-| `src-tauri/src/i18n.rs` | `resolve()` 在 Android 下用 `LANG` 环境变量替代 `sys_locale` | sys-locale 的 Android 实现走 JNI，纯 Rust 进程无 JVM 不可用 |
+| `src-tauri/src/i18n.rs` | `resolve()` 在 Android 下默认中文（不用 sys-locale/LANG 推断） | sys-locale 的 Android 实现走 JNI，纯 Rust 进程无 JVM 不可用；且 Termux 的 LANG 默认多为 en_US.UTF-8，不能反映用户偏好 —— 无显式设置时默认中文，设置页可切换并持久化 |
 | `src-tauri/Cargo.toml` + `web/Cargo.toml` | 增加 `url = "2"`；`sys-locale` 移入 `cfg(not(target_os="android"))` | 配合上述两处 |
 
 ## 架构
