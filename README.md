@@ -2,6 +2,11 @@
 
 <p align="center"><strong>简体中文</strong> | <a href="README.en.md">English</a></p>
 
+> **Termux / 自托管 Web 版**：本仓库在上游基础上新增了完整 Web 移植——无需 Tauri/WebView，
+> 以本地 HTTP 服务器在手机（Termux）或任意 Linux 上运行，浏览器访问。
+> 构建与用法见 <a href="PORTING.md">PORTING.md</a>（含上游补丁清单与架构说明），
+> 一键启动：<code>./start.sh</code>。
+
 <p align="center"><img src="public/brand-icon.png" alt="Z-Accounts 图标" width="160" /></p>
 
 <p align="center"><strong>非官方 ZCode 多账号管理桌面工具</strong></p>
