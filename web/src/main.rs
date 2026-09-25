@@ -30,9 +30,20 @@ pub mod zcrypto;
 use serde_json::json;
 use std::net::TcpListener;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use events::Hub;
+
+/// 全局账号库写锁（与上游 lib.rs 的 STORE_LOCK 同源；store.rs 内部经
+/// `crate::store_guard()` 使用，故必须定义在 crate 根）。
+static STORE_LOCK: Mutex<()> = Mutex::new(());
+
+pub(crate) fn store_guard() -> std::sync::MutexGuard<'static, ()> {
+    match STORE_LOCK.lock() {
+        Ok(g) => g,
+        Err(poisoned) => poisoned.into_inner(),
+    }
+}
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

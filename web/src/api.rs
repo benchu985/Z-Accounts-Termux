@@ -7,19 +7,10 @@
 //!  - 文件对话框命令 → Web 等价物（导出写入手机下载目录 / 导入接收上传内容）
 
 use crate::store::*;
-use crate::{cipher, claim, events::Hub, i18n, model_status, oauth, quota};
+use crate::{cipher, claim, events::Hub, i18n, model_status, oauth, quota, store, store_guard};
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-
-static STORE_LOCK: Mutex<()> = Mutex::new(());
-
-fn store_guard() -> std::sync::MutexGuard<'static, ()> {
-    match STORE_LOCK.lock() {
-        Ok(g) => g,
-        Err(poisoned) => poisoned.into_inner(),
-    }
-}
 
 struct PendingClaim {
     account_id: String,
