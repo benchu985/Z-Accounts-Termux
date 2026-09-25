@@ -174,14 +174,9 @@ pub fn dispatch(cmd: &str, b: &Value, hub: &Arc<Hub>) -> Result<Value, String> {
             let paths = Paths::detect();
             let mid = store::ensure_virtual_device_mid(&paths, &id)?;
             let acc = load_account(&paths, &id)?;
-            let (activated, activation_error) =
-                match claim::telemetry_user_id(&paths.home, &acc.credentials) {
-                    Some(uid) => match claim::report_activation_events(&uid, &mid) {
-                        Ok(()) => (true, None),
-                        Err(e) => (false, Some(e)),
-                    },
-                    None => (false, None),
-                };
+            // 遥测激活已移除：实测对 Start Plan 授予无效（服务端条件授予，不存在
+            // claim/activate 端点，见逆向分析 docs/auth/activation-protocol.md）；
+            // 伪造 app_launch/app_daily_active 事件只带来隐私暴露与请求开销。
             let plans = claim::preview_plans(
                 &paths.home,
                 &acc.credentials,
@@ -197,8 +192,8 @@ pub fn dispatch(cmd: &str, b: &Value, hub: &Arc<Hub>) -> Result<Value, String> {
             }
             to_value(ClaimRefreshResult {
                 plans,
-                activated,
-                activation_error,
+                activated: false,
+                activation_error: None,
             })
         }
         "claim_start" => {

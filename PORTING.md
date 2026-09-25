@@ -43,6 +43,7 @@ zaccounts-web（web/src/main.rs）
 | 后端弹 captcha 独立小窗 | `claim_start` 后由前端挂 `/captcha.html` 的 iframe 浮层（手动领取居中显示；自动领取 1px 离屏承载无感验证） |
 | 系统保存/打开对话框 | 导出直接写手机下载目录（`~/storage/downloads` 优先）；导入用浏览器 `<input type=file>` 读内容上传，sealed 校验仍在服务端 |
 | 托盘 / 自启动 / close-to-tray / reveal_main / open_settings | 删除或空实现；设置页 Web 模式隐藏对应开关 |
+| `claim_refresh` 前置的激活遥测（伪造 app_launch/app_daily_active 事件） | **已移除**：实测对 Start Plan 授予无效（服务端条件授予，不存在 claim/activate 端点，见逆向分析 docs/auth/activation-protocol.md），只带来隐私暴露与请求开销 |
 | 错误经 invoke 以原始字符串 reject | 响应体 `{ok:false, error}`，bridge 以原始字符串 reject，保持 `^[a-z_]+:` 错误码契约（前端 stripErr 依赖） |
 
 ### Termux 环境注意
