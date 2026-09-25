@@ -1,0 +1,78 @@
+name: Build Termux Web Server
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "web/**"
+      - "src-tauri/src/**"
+      - "src/**"
+      - ".github/workflows/build-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Android 7.0+，覆盖 Termux 实际支持的设备范围
+  NDK_VERSION: "27.0.12077973"
+  API: "24"
+
+jobs:
+  build:
+    name: Build aarch64-linux-android
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      # 直接链接 bionic（Termux 原生 libc），运行时 DNS 走 Android netd；
+      # glibc/musl 静态方案在 Termux 下 DNS 解析不可用，故必须走 NDK。
+      - name: Install Android NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK (sdkmanager)
+        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
+
+      - name: Install cargo-ndk
+        run: cargo install --locked cargo-ndk
+
+      - name: Build web server
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+        working-directory: web
+        run: |
+          cargo ndk -t arm64-v8a -p ${{ env.API }} build --release
+          file target/aarch64-linux-android/release/zaccounts-web
+
+      - name: Smoke check (ELF deps)
+        run: |
+          BIN=web/target/aarch64-linux-android/release/zaccounts-web
+          readelf -d "$BIN" | grep NEEDED
+          # 只允许依赖 Android 系统 .so（bionic 及其伙伴库）
+          readelf -d "$BIN" | grep NEEDED | grep -vE "lib(c|m|dl|log|stdc\+\+)\.so" && { echo "存在非系统依赖"; exit 1; } || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zaccounts-web-aarch64
+          path: web/target/aarch64-linux-android/release/zaccounts-web
+          if-no-files-found: error
+
+      # 前端无需构建（原生 ESM，服务器直接服务仓库 src/），打包源文件便于无仓库设备部署
+      - name: Upload frontend bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: zaccounts-web-frontend
+          path: |
+            index.html
+            settings.html
+            captcha.html
+            public/
+            src/
+          if-no-files-found: error

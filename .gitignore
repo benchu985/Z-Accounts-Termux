@@ -43,3 +43,6 @@ coding-plan-cache.json
 !.env.example
 
 __pycache__/
+
+# Web server build
+web/target/

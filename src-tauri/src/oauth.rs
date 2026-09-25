@@ -124,7 +124,7 @@ fn init_flow_at(url: &str, provider: &str, mid: &str) -> Result<FlowInit, String
     let poll_interval_ms = data.get("poll_interval_sec").and_then(|x| x.as_f64()).map(|s| (s * 1000.0) as u64)
         .ok_or_else(invalid)?;
 
-    let mut auth_url: tauri::Url = authorize.parse().map_err(|_| invalid())?;
+    let mut auth_url: url::Url = authorize.parse().map_err(|_| invalid())?;
     // The current backend returns a provider callback URL. The official
     // desktop client rewrites it to the web bridge, which then hands the
     // result back through zcode://oauth/callback. Without this rewrite the
@@ -165,7 +165,7 @@ fn init_flow_at(url: &str, provider: &str, mid: &str) -> Result<FlowInit, String
         return Err(invalid());
     }
     let init_base: String = url
-        .parse::<tauri::Url>()
+        .parse::<url::Url>()
         .map(|u| u.origin().ascii_serialization())
         .map_err(|_| invalid())?;
     Ok(FlowInit {

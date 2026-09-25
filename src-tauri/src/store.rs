@@ -413,7 +413,13 @@ pub fn open_url(url: &str) -> Result<(), String> {
         c.arg(url);
         c
     };
-    #[cfg(all(not(windows), not(target_os = "macos")))]
+    #[cfg(target_os = "android")]
+    let cmd = {
+        let mut c = no_window("termux-open-url");
+        c.arg(url);
+        c
+    };
+    #[cfg(all(not(windows), not(target_os = "macos"), not(target_os = "android")))]
     let cmd = {
         let mut c = no_window("xdg-open");
         c.arg(url);

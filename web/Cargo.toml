@@ -1,0 +1,31 @@
+[package]
+name = "zaccounts-web"
+version = "1.8.3"
+description = "Z-Accounts Termux/自托管 Web 服务器（复用上游 src-tauri 纯逻辑模块）"
+license = "MIT"
+edition = "2021"
+
+# 依赖与 src-tauri/Cargo.toml 保持同源（去掉 tauri 全家桶，加 url 供 oauth.rs）。
+# 刻意不用 axum/tokio：std::net + 线程足够支撑本地单用户使用，
+# 且依赖树小、在手机上编译快、省磁盘省内存。
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
+chrono = "0.4"
+aes-gcm = "0.10"
+base64 = "0.22"
+pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
+ureq = { version = "2", features = ["json"] }
+url = "2"
+iana-time-zone = "0.1"  # Android 下读 persist.sys.timezone 系统属性，纯 Rust 可用
+
+# sys-locale 的 Android 实现走 JNI（需 JVM），Termux 纯 Rust 进程不可用；
+# i18n.rs 已对 Android 改用 LANG 环境变量，故仅在非 Android 目标引入。
+[target.'cfg(not(target_os = "android"))'.dependencies]
+sys-locale = "0.3"
+
+[profile.release]
+strip = "symbols"
+lto = "thin"

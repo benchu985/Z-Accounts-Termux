@@ -30,6 +30,10 @@ aes-gcm = "0.10"
 base64 = "0.22"
 pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
 ureq = { version = "2", features = ["json"] }
+url = "2"
+
+# sys-locale 的 Android 实现走 JNI（需 JVM）；i18n.rs 对 Android 用 LANG 环境变量替代。
+[target.'cfg(not(target_os = "android"))'.dependencies]
 sys-locale = "0.3"
 
 [target.'cfg(windows)'.dependencies]
